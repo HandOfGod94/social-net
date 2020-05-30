@@ -31,7 +31,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_default_handler() {
+    async fn test_handler() {
         let mut data = HashMap::new();
         data.insert("foo".to_string(), "bar".to_string());
         let req = RequestBody { data };
