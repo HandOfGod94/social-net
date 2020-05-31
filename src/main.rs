@@ -1,9 +1,12 @@
 #[macro_use]
 extern crate log;
+extern crate diesel;
+extern crate dotenv;
 extern crate pretty_env_logger;
 
 mod handlers;
 mod router;
+mod schema;
 
 #[tokio::main]
 async fn main() {
