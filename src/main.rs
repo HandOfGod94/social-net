@@ -2,8 +2,7 @@
 extern crate log;
 extern crate pretty_env_logger;
 
-mod echo;
-mod ping;
+mod handlers;
 mod router;
 
 #[tokio::main]

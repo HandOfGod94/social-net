@@ -26,7 +26,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_handler() {
+    async fn test_get_success() {
         let filter = routes();
         let resp = warp::test::request()
             .method("GET")
@@ -43,5 +43,17 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(*resp.body(), expected_response);
+    }
+
+    #[tokio::test]
+    async fn test_unsupported_methods() {
+        let filter = routes();
+        let resp = warp::test::request()
+            .method("POST")
+            .path("/ping")
+            .reply(&filter)
+            .await;
+
+        assert_eq!(resp.status(), StatusCode::METHOD_NOT_ALLOWED);
     }
 }

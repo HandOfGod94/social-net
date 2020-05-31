@@ -1,8 +1,7 @@
 use warp::{Filter, Reply};
 
-use crate::echo;
-use crate::ping;
+use crate::handlers;
 
 pub fn routes() -> impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone {
-    ping::routes().or(echo::routes())
+    handlers::ping::routes().or(handlers::echo::routes())
 }
