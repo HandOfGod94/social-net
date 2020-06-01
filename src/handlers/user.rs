@@ -35,7 +35,7 @@ pub struct RequestBody {
 
 async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
     let resp = User::fetch_all(&conn);
-    Ok(warp::reply::json(&resp))
+    Ok(json(&resp))
 }
 
 async fn user_create(
