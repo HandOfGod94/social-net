@@ -19,7 +19,7 @@ pub fn routes(
 
     let user_create_route = path!("users")
         .and(post())
-        .and(with_db(pool.clone()))
+        .and(with_db(pool))
         .and(json_body())
         .and_then(user_create);
 

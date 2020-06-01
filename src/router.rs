@@ -18,5 +18,5 @@ pub fn routes() -> impl Filter<Extract = impl Reply, Error = warp::Rejection> + 
     let db_pool = establish_connection();
     handlers::ping::routes()
         .or(handlers::echo::routes())
-        .or(handlers::user::routes(db_pool.clone()))
+        .or(handlers::user::routes(db_pool))
 }
