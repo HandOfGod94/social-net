@@ -68,18 +68,30 @@ fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clo
 mod tests {
     use std::env;
 
-    use diesel::r2d2::{ConnectionManager, Pool};
-    use diesel::PgConnection;
+    use diesel::r2d2::{ConnectionManager, Pool, CustomizeConnection, Error};
+    use diesel::{PgConnection, Connection};
     use serde_json::json;
     use warp::http::StatusCode;
 
     use super::*;
 
+    #[derive(Debug)]
+    struct TestTransaction;
+
+    impl CustomizeConnection<PgConnection, Error> for TestTransaction {
+        fn on_acquire(&self, conn: &mut PgConnection) -> Result<(), Error> {
+            conn.begin_test_transaction().unwrap();
+            Ok(())
+        }
+    }
+
     fn establish_connection() -> Pool<ConnectionManager<PgConnection>> {
         dotenv::dotenv().ok();
         let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let manager = ConnectionManager::<PgConnection>::new(&database_url);
-        Pool::new(manager).expect("Postgres connection pool couldn't be created")
+        Pool::builder()
+            .connection_customizer(Box::new(TestTransaction))
+            .build(manager).expect("Postgres connection pool couldn't be created")
     }
 
     #[tokio::test]
@@ -128,13 +140,12 @@ mod tests {
 
         let expected_response = json!({
             "id": "1234",
-            "username": "sdawer",
-            "password": "wer2r23",
-            "email": "Wer23"
-        })
-        .to_string();
+            "username": "bob",
+            "password": "bob@open.org",
+            "email": "password"
+        }).to_string();
 
-        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(resp.status(), StatusCode::CREATED);
         assert_eq!(
             *resp.body(),
             expected_response,
