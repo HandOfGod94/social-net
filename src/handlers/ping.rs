@@ -28,11 +28,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_success() {
         let filter = routes();
-        let resp = warp::test::request()
-            .method("GET")
-            .path("/ping")
-            .reply(&filter)
-            .await;
+        let resp = warp::test::request().method("GET").path("/ping").reply(&filter).await;
 
         let expected_response = json!(
             {
@@ -48,11 +44,7 @@ mod tests {
     #[tokio::test]
     async fn test_unsupported_methods() {
         let filter = routes();
-        let resp = warp::test::request()
-            .method("POST")
-            .path("/ping")
-            .reply(&filter)
-            .await;
+        let resp = warp::test::request().method("POST").path("/ping").reply(&filter).await;
 
         assert_eq!(resp.status(), StatusCode::METHOD_NOT_ALLOWED);
     }

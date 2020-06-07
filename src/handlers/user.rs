@@ -9,9 +9,7 @@ use warp::{post, Filter, Rejection};
 use crate::models::user::{NewUser, User};
 use crate::{ConnectionPool, PooledPgConnection};
 
-pub fn routes(
-    pool: ConnectionPool,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub fn routes(pool: ConnectionPool) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let user_index_route = path!("users")
         .and(get())
         .and(with_db(pool.clone()))
@@ -38,10 +36,7 @@ async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
     Ok(json(&resp))
 }
 
-async fn user_create(
-    conn: PooledPgConnection,
-    req: RequestBody,
-) -> Result<WithStatus<Json>, Infallible> {
+async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
     let new_user = NewUser {
         username: req.username,
         password: req.password,
@@ -54,9 +49,7 @@ async fn user_create(
     }
 }
 
-fn with_db(
-    pool: ConnectionPool,
-) -> impl Filter<Extract = (PooledPgConnection,), Error = Infallible> + Clone {
+fn with_db(pool: ConnectionPool) -> impl Filter<Extract = (PooledPgConnection,), Error = Infallible> + Clone {
     warp::any().map(move || pool.get().unwrap())
 }
 
@@ -66,20 +59,16 @@ fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clo
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
-    use warp::http::StatusCode;
     use super::*;
     use crate::test_helpers::establish_connection;
+    use serde_json::json;
+    use warp::http::StatusCode;
 
     #[tokio::test]
     async fn test_user_index() {
         let db = establish_connection();
         let filter = routes(db.clone());
-        let resp = warp::test::request()
-            .method("GET")
-            .path("/users")
-            .reply(&filter)
-            .await;
+        let resp = warp::test::request().method("GET").path("/users").reply(&filter).await;
 
         let expected_response = json!([
             {
@@ -91,11 +80,7 @@ mod tests {
         .to_string();
 
         assert_eq!(resp.status(), StatusCode::OK);
-        assert_eq!(
-            *resp.body(),
-            expected_response,
-            "should return list of users"
-        );
+        assert_eq!(*resp.body(), expected_response, "should return list of users");
     }
 
     #[tokio::test]
@@ -120,13 +105,10 @@ mod tests {
             "username": "bob",
             "password": "bob@open.org",
             "email": "password"
-        }).to_string();
+        })
+        .to_string();
 
         assert_eq!(resp.status(), StatusCode::CREATED);
-        assert_eq!(
-            *resp.body(),
-            expected_response,
-            "should return list of users"
-        );
+        assert_eq!(*resp.body(), expected_response, "should return list of users");
     }
 }

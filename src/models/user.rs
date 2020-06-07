@@ -14,24 +14,12 @@ pub struct User {
     pub password: String,
 }
 
-#[derive(Insertable, Serialize, Deserialize, Debug)]
-#[table_name = "users"]
-pub struct NewUser {
-    pub username: String,
-    pub email: String,
-    pub password: String,
-}
-
 impl User {
     pub fn fetch_all(conn: &PooledPgConnection) -> Vec<User> {
         users.load::<User>(conn).unwrap()
     }
-}
 
-impl NewUser {
     pub fn save(self, conn: &PooledPgConnection) -> QueryResult<User> {
-        diesel::insert_into(users::table)
-            .values(self)
-            .get_result(conn)
+        diesel::insert_into(users::table).values(self).get_result(conn)
     }
 }

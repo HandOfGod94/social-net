@@ -1,6 +1,6 @@
+use diesel::r2d2::{ConnectionManager, CustomizeConnection, Error, Pool};
+use diesel::{Connection, PgConnection};
 use std::env;
-use diesel::r2d2::{ConnectionManager, Pool, CustomizeConnection, Error};
-use diesel::{PgConnection, Connection};
 
 #[derive(Debug)]
 struct TestTransaction;
@@ -18,5 +18,6 @@ pub fn establish_connection() -> Pool<ConnectionManager<PgConnection>> {
     let manager = ConnectionManager::<PgConnection>::new(&database_url);
     Pool::builder()
         .connection_customizer(Box::new(TestTransaction))
-        .build(manager).expect("Postgres connection pool couldn't be created")
+        .build(manager)
+        .expect("Postgres connection pool couldn't be created")
 }

@@ -22,9 +22,7 @@ async fn main() {
 
     info!("Starting Server");
 
-    warp::serve(router::routes())
-        .run(([127, 0, 0, 1], 8080))
-        .await;
+    warp::serve(router::routes()).run(([127, 0, 0, 1], 8080)).await;
 }
 
 #[cfg(test)]
