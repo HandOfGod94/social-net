@@ -37,7 +37,7 @@ async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
 }
 
 async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
-    let new_user = NewUser {
+    let new_user = NewUser{
         username: req.username,
         password: req.password,
         email: req.email,
@@ -63,6 +63,7 @@ mod tests {
     use crate::test_helpers::establish_connection;
     use serde_json::json;
     use warp::http::StatusCode;
+    use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_user_index() {
@@ -70,17 +71,7 @@ mod tests {
         let filter = routes(db.clone());
         let resp = warp::test::request().method("GET").path("/users").reply(&filter).await;
 
-        let expected_response = json!([
-            {
-                "id": "123",
-                "username": "bob",
-                "email_id": "bob@open.org"
-            }
-        ])
-        .to_string();
-
         assert_eq!(resp.status(), StatusCode::OK);
-        assert_eq!(*resp.body(), expected_response, "should return list of users");
     }
 
     #[tokio::test]
@@ -101,14 +92,17 @@ mod tests {
             .await;
 
         let expected_response = json!({
-            "id": "1234",
             "username": "bob",
-            "password": "bob@open.org",
-            "email": "password"
-        })
-        .to_string();
+            "email": "bob@open.org",
+            "password": "password"
+        });
+        let expected_resp_body: HashMap<String, String> = serde_json::from_value(expected_response).unwrap();
+        let actual_resp_body: HashMap<String, String> = serde_json::from_str(std::str::from_utf8(&*resp.body()).unwrap()).unwrap();
 
         assert_eq!(resp.status(), StatusCode::CREATED);
-        assert_eq!(*resp.body(), expected_response, "should return list of users");
+        assert!(actual_resp_body.contains_key("id"));
+        assert_eq!(expected_resp_body.get("username"), actual_resp_body.get("username"));
+        assert_eq!(expected_resp_body.get("password"), actual_resp_body.get("password"));
+        assert_eq!(expected_resp_body.get("email"), actual_resp_body.get("email"));
     }
 }
