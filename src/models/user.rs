@@ -16,7 +16,7 @@ pub struct User {
 }
 
 #[derive(Insertable, Serialize, Deserialize, Debug)]
-#[table_name="users"]
+#[table_name = "users"]
 pub struct NewUser {
     pub username: String,
     pub email: String,

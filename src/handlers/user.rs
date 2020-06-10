@@ -37,7 +37,7 @@ async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
 }
 
 async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
-    let new_user = NewUser{
+    let new_user = NewUser {
         username: req.username,
         password: req.password,
         email: req.email,
@@ -59,11 +59,14 @@ fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clo
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::test_helpers::establish_connection;
+    use std::collections::HashMap;
+
     use serde_json::json;
     use warp::http::StatusCode;
-    use std::collections::HashMap;
+
+    use crate::test_helpers::establish_connection;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_user_index() {
@@ -97,7 +100,8 @@ mod tests {
             "password": "password"
         });
         let expected_resp_body: HashMap<String, String> = serde_json::from_value(expected_response).unwrap();
-        let actual_resp_body: HashMap<String, String> = serde_json::from_str(std::str::from_utf8(&*resp.body()).unwrap()).unwrap();
+        let actual_resp_body: HashMap<String, String> =
+            serde_json::from_str(std::str::from_utf8(&*resp.body()).unwrap()).unwrap();
 
         assert_eq!(resp.status(), StatusCode::CREATED);
         assert!(actual_resp_body.contains_key("id"));
