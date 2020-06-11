@@ -3,11 +3,11 @@ use diesel::{Insertable, QueryResult, Queryable};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::handlers::user;
+use crate::handlers::user::RequestBody;
 use crate::schema::users;
 use crate::schema::users::dsl::*;
 use crate::PooledPgConnection;
-use crate::handlers::user;
-use crate::handlers::user::RequestBody;
 
 #[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
 pub struct User {
@@ -42,7 +42,7 @@ impl From<user::RequestBody> for NewUser {
         NewUser {
             username: req.username,
             password: req.password,
-            email: req.email
+            email: req.email,
         }
     }
 }
