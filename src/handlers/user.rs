@@ -7,6 +7,7 @@ use warp::{get, path};
 use warp::{post, Filter, Rejection};
 
 use crate::models::user::{NewUser, User};
+use crate::views::user_view;
 use crate::{ConnectionPool, PooledPgConnection};
 
 pub fn routes(pool: ConnectionPool) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -44,7 +45,10 @@ async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithS
     };
 
     match new_user.save(&conn) {
-        Ok(user) => Ok(with_status(json(&user), StatusCode::CREATED)),
+        Ok(user) => {
+            let resp = user_view::user_create(user);
+            Ok(with_status(json(&resp), StatusCode::CREATED))
+        }
         Err(err) => Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST)),
     }
 }
@@ -93,19 +97,12 @@ mod tests {
             .reply(&filter)
             .await;
 
-        let mut expected_resp_body = HashMap::new();
-        expected_resp_body.insert("username".to_string(), "bob".to_string());
-        expected_resp_body.insert("email".to_string(), "bob@open.org".to_string());
-        expected_resp_body.insert("password".to_string(), "password".to_string());
-
         let actual_resp_body: HashMap<String, String> = std::str::from_utf8(resp.body())
             .map(|body| serde_json::from_str(body).unwrap())
             .expect("Invalid response");
 
         assert_eq!(resp.status(), StatusCode::CREATED);
         assert!(actual_resp_body.contains_key("id"));
-        assert_eq!(expected_resp_body.get("username"), actual_resp_body.get("username"));
-        assert_eq!(expected_resp_body.get("password"), actual_resp_body.get("password"));
-        assert_eq!(expected_resp_body.get("email"), actual_resp_body.get("email"));
+        assert_eq!(actual_resp_body.keys().len(), 1);
     }
 }
