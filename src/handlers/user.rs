@@ -27,9 +27,9 @@ pub fn routes(pool: ConnectionPool) -> impl Filter<Extract = impl warp::Reply, E
 
 #[derive(Serialize, Deserialize)]
 pub struct RequestBody {
-    username: String,
-    password: String,
-    email: String,
+    pub username: String,
+    pub password: String,
+    pub email: String,
 }
 
 async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
@@ -39,11 +39,7 @@ async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
 }
 
 async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
-    let new_user = NewUser {
-        username: req.username,
-        password: req.password,
-        email: req.email,
-    };
+    let new_user = NewUser::from(req);
 
     match new_user.save(&conn) {
         Ok(user) => {
