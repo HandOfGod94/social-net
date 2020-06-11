@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 
 use crate::models::user::User;
 
-pub fn user_list(users: &Vec<User>) -> Value {
+pub fn user_list(users: &[User]) -> Value {
     let users_json: Vec<HashMap<String, String>> = users
         .iter()
         .map(|user| {
