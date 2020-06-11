@@ -33,7 +33,8 @@ pub struct RequestBody {
 }
 
 async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
-    let resp = User::fetch_all(&conn);
+    let users = User::fetch_all(&conn);
+    let resp = user_view::user_list(&users);
     Ok(json(&resp))
 }
 
