@@ -19,7 +19,7 @@ pub fn user_list(users: &Vec<User>) -> Value {
     serde_json::to_value(users_json).unwrap()
 }
 
-pub fn user_create(user: User) -> Value {
+pub fn user_create(user: &User) -> Value {
     let id = user.id;
     json!({ "id": id })
 }
@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn user_create_view_returns_id() {
         let bob = create_fake_users();
-        let actual = user_create(bob.clone());
+        let actual = user_create(&bob);
 
         let expected = json!({ "id": bob.id });
 

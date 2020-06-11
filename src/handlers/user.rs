@@ -47,7 +47,7 @@ async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithS
 
     match new_user.save(&conn) {
         Ok(user) => {
-            let resp = user_view::user_create(user);
+            let resp = user_view::user_create(&user);
             Ok(with_status(json(&resp), StatusCode::CREATED))
         }
         Err(err) => Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST)),
