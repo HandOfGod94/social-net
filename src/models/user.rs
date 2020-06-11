@@ -7,7 +7,7 @@ use crate::schema::users;
 use crate::schema::users::dsl::*;
 use crate::PooledPgConnection;
 
-#[derive(Queryable, Serialize, Deserialize, Debug)]
+#[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
 pub struct User {
     pub id: Uuid,
     pub username: String,
