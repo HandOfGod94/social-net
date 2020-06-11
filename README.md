@@ -6,4 +6,22 @@ Personal Rust experimentation to create a social network app.
 
 ## Deps:
 - warp
-- diesel
+- diesel with postgres
+
+## Build:
+```sh
+# To run tests
+carog test
+
+# clippy
+carog clippy
+
+# to create binary
+cargo build --release
+
+# To start dev server
+RUST_LOG=social_net,warp=info cargo run
+
+# To start prod server
+RUST_LOG=social_net,warp=info ./releases/social-net 
+```
