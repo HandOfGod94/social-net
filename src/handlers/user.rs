@@ -61,7 +61,6 @@ fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clo
 mod tests {
     use std::collections::HashMap;
 
-    use serde_json::json;
     use warp::http::StatusCode;
 
     use crate::test_helpers::establish_connection;
@@ -94,14 +93,14 @@ mod tests {
             .reply(&filter)
             .await;
 
-        let expected_response = json!({
-            "username": "bob",
-            "email": "bob@open.org",
-            "password": "password"
-        });
-        let expected_resp_body: HashMap<String, String> = serde_json::from_value(expected_response).unwrap();
-        let actual_resp_body: HashMap<String, String> =
-            serde_json::from_str(std::str::from_utf8(&*resp.body()).unwrap()).unwrap();
+        let mut expected_resp_body = HashMap::new();
+        expected_resp_body.insert("username".to_string(), "bob".to_string());
+        expected_resp_body.insert("email".to_string(), "bob@open.org".to_string());
+        expected_resp_body.insert("password".to_string(), "password".to_string());
+
+        let actual_resp_body: HashMap<String, String> = std::str::from_utf8(resp.body())
+            .map(|body| serde_json::from_str(body).unwrap())
+            .expect("Invalid response");
 
         assert_eq!(resp.status(), StatusCode::CREATED);
         assert!(actual_resp_body.contains_key("id"));
