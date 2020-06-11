@@ -1,6 +1,8 @@
+use std::env;
+
 use diesel::r2d2::{ConnectionManager, CustomizeConnection, Error, Pool};
 use diesel::{Connection, PgConnection};
-use std::env;
+
 use crate::ConnectionPool;
 
 #[derive(Debug)]

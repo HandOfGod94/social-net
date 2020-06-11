@@ -5,7 +5,7 @@ authors = ["gahan.rakholia <gahan.rakholia@go-jek.com>"]
 edition = "2018"
 
 [profile.release]
-opt-level = 3
+opt-level = "z"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
