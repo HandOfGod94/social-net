@@ -4,17 +4,17 @@
 
 Personal Rust experimentation to create a social network app.
 
-## Deps:
+## Deps
 - warp
 - diesel with postgres
 
-## Build:
+## Build
 ```sh
 # To run tests
-carog test
+cargo test
 
 # clippy
-carog clippy
+cargo clippy
 
 # to create binary
 cargo build --release
