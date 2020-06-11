@@ -65,6 +65,10 @@ fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clo
 mod tests {
     use std::collections::HashMap;
 
+    use fake::faker::internet::en::FreeEmail;
+    use fake::faker::internet::en::Password;
+    use fake::faker::name::en::Name;
+    use fake::Fake;
     use warp::http::StatusCode;
 
     use crate::test_helpers::establish_connection;
@@ -81,12 +85,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_user_create() {
+    async fn post_user_succeeds_for_valid_values() {
         let db = establish_connection();
         let req = RequestBody {
-            username: "bob".to_string(),
-            email: "bob@open.org".to_string(),
-            password: "password".to_string(),
+            username: Name().fake(),
+            email: FreeEmail().fake(),
+            password: Password(5..10).fake(),
         };
 
         let filter = routes(db.clone());
