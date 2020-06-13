@@ -9,11 +9,11 @@ use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::PgConnection;
 use warp::Filter;
 
-mod handlers;
 mod router;
 mod schema;
 mod user;
 mod echo;
+mod ping;
 
 type ConnectionPool = Pool<ConnectionManager<PgConnection>>;
 type PooledPgConnection = PooledConnection<ConnectionManager<PgConnection>>;
