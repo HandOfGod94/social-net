@@ -3,10 +3,9 @@ use diesel::{Insertable, QueryResult, Queryable};
 use serde::{Deserialize, Serialize};
 
 use super::repository::UserReader;
-use crate::handlers::user;
-use crate::handlers::user::RequestBody;
 use crate::schema::users;
 use crate::schema::users::dsl::*;
+use crate::user::handler::RequestBody;
 use crate::user::repository::UserCreator;
 use crate::PooledPgConnection;
 use uuid::Uuid;
@@ -33,7 +32,7 @@ pub struct NewUser {
     pub password: String,
 }
 
-impl From<user::RequestBody> for NewUser {
+impl From<RequestBody> for NewUser {
     fn from(req: RequestBody) -> Self {
         NewUser {
             username: req.username,
