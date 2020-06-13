@@ -6,11 +6,11 @@ use warp::reply::{json, with_status, Json, WithStatus};
 use warp::{get, path};
 use warp::{post, Filter, Rejection};
 
-use crate::user::model;
-use crate::user::model::NewUser;
-use crate::user::repository::{UserCreator, UserReader};
-use crate::user::view;
 use crate::{ConnectionPool, PooledPgConnection};
+
+use super::model::{NewUser, User};
+use super::repository::{UserCreator, UserReader};
+use super::view;
 
 pub fn routes(pool: ConnectionPool) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let user_index_route = path!("users")
@@ -35,7 +35,7 @@ pub struct RequestBody {
 }
 
 async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
-    let users = model::User::read_all(&conn);
+    let users = User::read_all(&conn);
     let resp = view::user_list(&users);
     Ok(json(&resp))
 }
