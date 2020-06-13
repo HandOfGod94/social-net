@@ -10,9 +10,9 @@ use diesel::PgConnection;
 use warp::Filter;
 
 mod handlers;
-mod models;
 mod router;
 mod schema;
+mod user;
 mod views;
 
 type ConnectionPool = Pool<ConnectionManager<PgConnection>>;

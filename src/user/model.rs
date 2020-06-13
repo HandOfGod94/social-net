@@ -1,13 +1,15 @@
 use diesel::prelude::*;
 use diesel::{Insertable, QueryResult, Queryable};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
+use super::repository::UserReader;
 use crate::handlers::user;
 use crate::handlers::user::RequestBody;
 use crate::schema::users;
 use crate::schema::users::dsl::*;
+use crate::user::repository::UserCreator;
 use crate::PooledPgConnection;
+use uuid::Uuid;
 
 #[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
 pub struct User {
@@ -15,6 +17,12 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub password: String,
+}
+
+impl UserReader for User {
+    fn read_all(conn: &PooledPgConnection) -> Vec<User> {
+        users.load::<User>(conn).unwrap()
+    }
 }
 
 #[derive(Insertable, Serialize, Deserialize, Debug)]
@@ -25,18 +33,6 @@ pub struct NewUser {
     pub password: String,
 }
 
-impl User {
-    pub fn fetch_all(conn: &PooledPgConnection) -> Vec<User> {
-        users.load::<User>(conn).unwrap()
-    }
-}
-
-impl NewUser {
-    pub fn save(self, conn: &PooledPgConnection) -> QueryResult<User> {
-        diesel::insert_into(users::table).values(self).get_result(conn)
-    }
-}
-
 impl From<user::RequestBody> for NewUser {
     fn from(req: RequestBody) -> Self {
         NewUser {
@@ -44,5 +40,11 @@ impl From<user::RequestBody> for NewUser {
             password: req.password,
             email: req.email,
         }
+    }
+}
+
+impl UserCreator for NewUser {
+    fn create(&self, conn: &PooledPgConnection) -> QueryResult<User> {
+        diesel::insert_into(users::table).values(self).get_result(conn)
     }
 }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json::{json, Value};
 
-use crate::models::user::User;
+use crate::user::model::User;
 
 pub fn user_list(users: &[User]) -> Value {
     let users_json: Vec<HashMap<String, String>> = users

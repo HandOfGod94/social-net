@@ -6,7 +6,9 @@ use warp::reply::{json, with_status, Json, WithStatus};
 use warp::{get, path};
 use warp::{post, Filter, Rejection};
 
-use crate::models::user::{NewUser, User};
+use crate::user::model;
+use crate::user::model::NewUser;
+use crate::user::repository::{UserCreator, UserReader};
 use crate::views::user_view;
 use crate::{ConnectionPool, PooledPgConnection};
 
@@ -33,7 +35,7 @@ pub struct RequestBody {
 }
 
 async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
-    let users = User::fetch_all(&conn);
+    let users = model::User::read_all(&conn);
     let resp = user_view::user_list(&users);
     Ok(json(&resp))
 }
@@ -41,7 +43,7 @@ async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
 async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
     let new_user = NewUser::from(req);
 
-    match new_user.save(&conn) {
+    match new_user.create(&conn) {
         Ok(user) => {
             let resp = user_view::user_create(&user);
             Ok(with_status(json(&resp), StatusCode::CREATED))
