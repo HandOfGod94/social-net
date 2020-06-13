@@ -1,6 +1,8 @@
-use crate::user::model::User;
-use crate::PooledPgConnection;
 use diesel::QueryResult;
+
+use crate::PooledPgConnection;
+
+use super::model::User;
 
 // todo: change it to private once all the user functions are moved to same mod
 pub trait UserReader {

@@ -1,14 +1,15 @@
 use diesel::prelude::*;
 use diesel::{Insertable, QueryResult, Queryable};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use super::repository::UserReader;
 use crate::schema::users;
 use crate::schema::users::dsl::*;
-use crate::user::handler::RequestBody;
-use crate::user::repository::UserCreator;
 use crate::PooledPgConnection;
-use uuid::Uuid;
+
+use super::handler::RequestBody;
+use super::repository::UserCreator;
+use super::repository::UserReader;
 
 #[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
 pub struct User {
