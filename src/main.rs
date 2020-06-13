@@ -13,7 +13,6 @@ mod handlers;
 mod router;
 mod schema;
 mod user;
-mod views;
 
 type ConnectionPool = Pool<ConnectionManager<PgConnection>>;
 type PooledPgConnection = PooledConnection<ConnectionManager<PgConnection>>;

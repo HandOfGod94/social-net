@@ -9,7 +9,7 @@ use warp::{post, Filter, Rejection};
 use crate::user::model;
 use crate::user::model::NewUser;
 use crate::user::repository::{UserCreator, UserReader};
-use crate::views::user_view;
+use crate::user::view;
 use crate::{ConnectionPool, PooledPgConnection};
 
 pub fn routes(pool: ConnectionPool) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -36,7 +36,7 @@ pub struct RequestBody {
 
 async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
     let users = model::User::read_all(&conn);
-    let resp = user_view::user_list(&users);
+    let resp = view::user_list(&users);
     Ok(json(&resp))
 }
 
@@ -45,7 +45,7 @@ async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithS
 
     match new_user.create(&conn) {
         Ok(user) => {
-            let resp = user_view::user_create(&user);
+            let resp = view::user_create(&user);
             Ok(with_status(json(&resp), StatusCode::CREATED))
         }
         Err(err) => Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST)),
