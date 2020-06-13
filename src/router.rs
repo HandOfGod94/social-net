@@ -5,6 +5,7 @@ use diesel::PgConnection;
 use warp::{Filter, Reply};
 
 use crate::handlers;
+use crate::echo;
 use crate::user;
 use crate::ConnectionPool;
 
@@ -18,6 +19,6 @@ fn establish_connection() -> ConnectionPool {
 pub fn routes() -> impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone {
     let db_pool = establish_connection();
     handlers::ping::routes()
-        .or(handlers::echo::routes())
+        .or(echo::routes())
         .or(user::handler::routes(db_pool))
 }
