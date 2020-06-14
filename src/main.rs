@@ -5,7 +5,7 @@ extern crate dotenv;
 extern crate log;
 extern crate pretty_env_logger;
 
-use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use warp::Filter;
 
@@ -16,7 +16,6 @@ mod schema;
 mod user;
 
 type ConnectionPool = Pool<ConnectionManager<PgConnection>>;
-type PooledPgConnection = PooledConnection<ConnectionManager<PgConnection>>;
 
 #[tokio::main]
 async fn main() {

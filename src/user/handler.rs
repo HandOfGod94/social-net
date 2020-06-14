@@ -6,21 +6,21 @@ use warp::reply::{json, with_status, Json, WithStatus};
 use warp::{get, path};
 use warp::{post, Filter, Rejection};
 
-use crate::{ConnectionPool, PooledPgConnection};
+use crate::user::repository::{Repository, UserRepo};
+use crate::ConnectionPool;
 
-use super::model::{NewUser, User};
-use super::repository::{UserCreator, UserReader};
+use super::model::NewUser;
 use super::view;
 
 pub fn routes(pool: ConnectionPool) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let user_index_route = path!("users")
         .and(get())
-        .and(with_db(pool.clone()))
+        .and(with_repo(pool.clone()))
         .and_then(user_index);
 
     let user_create_route = path!("users")
         .and(post())
-        .and(with_db(pool))
+        .and(with_repo(pool))
         .and(json_body())
         .and_then(user_create);
 
@@ -34,16 +34,17 @@ pub struct RequestBody {
     pub email: String,
 }
 
-async fn user_index(conn: PooledPgConnection) -> Result<Json, Infallible> {
-    let users = User::read_all(&conn);
+async fn user_index(user_repo: impl Repository) -> Result<Json, Infallible> {
+    let users = user_repo.read_all();
     let resp = view::user_list(&users);
     Ok(json(&resp))
 }
 
-async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
+async fn user_create(user_repo: impl Repository, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
     let new_user = NewUser::from(req);
+    let result = user_repo.create(new_user);
 
-    match new_user.create(&conn) {
+    match result {
         Ok(user) => {
             let resp = view::user_create(&user);
             Ok(with_status(json(&resp), StatusCode::CREATED))
@@ -52,8 +53,9 @@ async fn user_create(conn: PooledPgConnection, req: RequestBody) -> Result<WithS
     }
 }
 
-fn with_db(pool: ConnectionPool) -> impl Filter<Extract = (PooledPgConnection,), Error = Infallible> + Clone {
-    warp::any().map(move || pool.get().unwrap())
+fn with_repo(pool: ConnectionPool) -> impl Filter<Extract = (impl Repository,), Error = Infallible> + Clone {
+    let repo = UserRepo::new(pool);
+    warp::any().map(move || repo.clone())
 }
 
 fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clone {
