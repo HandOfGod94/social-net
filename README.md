@@ -23,5 +23,5 @@ cargo build --release
 RUST_LOG=social_net,warp=info cargo run
 
 # To start prod server
-RUST_LOG=social_net,warp=info ./releases/social-net 
+RUST_LOG=social_net,warp=info ./target/release/social-net
 ```
