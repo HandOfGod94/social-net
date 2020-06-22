@@ -70,17 +70,32 @@ mod tests {
     use fake::faker::internet::en::Password;
     use fake::faker::name::en::Name;
     use fake::Fake;
+    use serde_json::json;
+    use uuid::Uuid;
     use warp::http::StatusCode;
+    use warp::test::request;
+    use warp::Reply;
 
     use crate::test_helpers::establish_connection;
+    use crate::user::model::User;
+    use crate::user::repository::*;
 
     use super::*;
+
+    fn create_fake_users() -> User {
+        User {
+            id: Uuid::new_v4(),
+            username: Name().fake(),
+            password: Password(5..10).fake(),
+            email: FreeEmail().fake(),
+        }
+    }
 
     #[tokio::test]
     async fn test_user_index() {
         let db = establish_connection();
         let filter = routes(db.clone());
-        let resp = warp::test::request().method("GET").path("/users").reply(&filter).await;
+        let resp = request().method("GET").path("/users").reply(&filter).await;
 
         assert_eq!(resp.status(), StatusCode::OK);
     }
@@ -95,12 +110,7 @@ mod tests {
         };
 
         let filter = routes(db.clone());
-        let resp = warp::test::request()
-            .method("POST")
-            .path("/users")
-            .json(&req)
-            .reply(&filter)
-            .await;
+        let resp = request().method("POST").path("/users").json(&req).reply(&filter).await;
 
         let actual_resp_body: HashMap<String, String> = std::str::from_utf8(resp.body())
             .map(|body| serde_json::from_str(body).unwrap())
@@ -109,5 +119,34 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::CREATED);
         assert!(actual_resp_body.contains_key("id"));
         assert_eq!(actual_resp_body.keys().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn user_index_returns_json_array() {
+        let mut mock_user_repo = MockRepository::new();
+        let bob = create_fake_users();
+        let alice = create_fake_users();
+        let expected_body = json!([
+            {
+                "email": bob.email,
+                "id": bob.id,
+                "username": bob.username
+            },{
+                "email": alice.email,
+                "id": alice.id,
+                "username": alice.username
+            }
+        ])
+        .to_string();
+
+        mock_user_repo
+            .expect_read_all()
+            .times(1)
+            .returning(move || vec![bob.clone(), alice.clone()]);
+
+        let result = user_index(mock_user_repo).await.unwrap().into_response();
+        let body = hyper::body::to_bytes(result.into_body()).await.unwrap();
+
+        assert_eq!(expected_body, body)
     }
 }

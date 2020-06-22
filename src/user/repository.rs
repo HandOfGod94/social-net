@@ -1,5 +1,7 @@
 use diesel::prelude::*;
 use diesel::QueryResult;
+#[cfg(test)]
+use mockall::automock;
 
 use crate::schema::users;
 use crate::schema::users::dsl::*;
@@ -8,6 +10,7 @@ use crate::ConnectionPool;
 
 use super::model::User;
 
+#[cfg_attr(test, automock)]
 pub trait Repository {
     fn read_all(&self) -> Vec<User>;
     fn create(&self, new_user: NewUser) -> QueryResult<User>;
