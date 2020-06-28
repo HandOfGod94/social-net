@@ -1,6 +1,7 @@
 use std::convert::Infallible;
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use warp::http::StatusCode;
 use warp::reply::{json, with_status, Json, WithStatus};
 use warp::{get, path};
@@ -20,13 +21,20 @@ pub fn routes(
         .and(with_repo(pool.clone()))
         .and_then(user_index);
 
+    let user_details_route = path!("users" / Uuid)
+        .and(get())
+        .and(with_repo(pool.clone()))
+        .and_then(user_details);
+
     let user_create_route = path!("users")
         .and(post())
         .and(with_repo(pool))
         .and(json_body())
         .and_then(user_create);
 
-    user_index_route.or(user_create_route)
+    user_index_route
+        .or(user_details_route)
+        .or(user_create_route)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -60,6 +68,22 @@ async fn user_create(
     }
 }
 
+async fn user_details(
+    id: Uuid,
+    user_repo: impl Repository,
+) -> Result<WithStatus<Json>, Infallible> {
+    let result = user_repo.find(id);
+    match result {
+        Ok(user) => {
+            let resp = view::user_details(&user);
+            Ok(with_status(json(&resp), StatusCode::OK))
+        }
+        Err(err) => {
+            Ok(with_status(json(&err.to_string()), StatusCode::NOT_FOUND))
+        }
+    }
+}
+
 fn with_repo(
     pool: ConnectionPool,
 ) -> impl Filter<Extract = (impl Repository,), Error = Infallible> + Clone {
@@ -80,6 +104,7 @@ mod tests {
     use fake::faker::internet::en::Password;
     use fake::faker::name::en::Name;
     use fake::Fake;
+    use mockall::*;
     use serde_json::json;
     use uuid::Uuid;
     use warp::http::StatusCode;
@@ -142,7 +167,7 @@ mod tests {
         let mut mock_user_repo = MockRepository::new();
         let bob = create_fake_users();
         let alice = create_fake_users();
-        let expected_body = json!([
+        let expected = json!([
             {
                 "email": bob.email,
                 "id": bob.id,
@@ -161,8 +186,38 @@ mod tests {
             .returning(move || vec![bob.clone(), alice.clone()]);
 
         let result = user_index(mock_user_repo).await.unwrap().into_response();
-        let body = hyper::body::to_bytes(result.into_body()).await.unwrap();
+        let actual = hyper::body::to_bytes(result.into_body()).await.unwrap();
 
-        assert_eq!(expected_body, body)
+        assert_eq!(actual, expected)
+    }
+
+    #[tokio::test]
+    async fn user_details_returns_user_json_value() {
+        let mut mock_user_repo = MockRepository::new();
+        let bob = create_fake_users();
+        let bob_id = bob.clone().id;
+        let expected = json!({
+            "id": bob_id,
+            "username": bob.clone().username,
+            "password": "*****",
+            "email": bob.clone().email
+        })
+        .to_string();
+
+        mock_user_repo
+            .expect_find()
+            .with(predicate::eq(bob_id))
+            .times(1)
+            .returning(move |_id| Ok(bob.clone()));
+
+        let user_details = user_details(bob_id, mock_user_repo)
+            .await
+            .unwrap()
+            .into_response();
+        let actual = hyper::body::to_bytes(user_details.into_body())
+            .await
+            .unwrap();
+
+        assert_eq!(actual, expected);
     }
 }

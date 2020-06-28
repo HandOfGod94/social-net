@@ -19,9 +19,17 @@ pub fn user_list(users: &[User]) -> Value {
     serde_json::to_value(users_json).unwrap()
 }
 
+pub fn user_details(user: &User) -> Value {
+    json!({
+        "id": user.id,
+        "username": user.username,
+        "password": "*****",
+        "email": user.email
+    })
+}
+
 pub fn user_create(user: &User) -> Value {
-    let id = user.id;
-    json!({ "id": id })
+    json!({ "id": user.id })
 }
 
 #[cfg(test)]
@@ -74,5 +82,19 @@ mod tests {
         let expected = json!({ "id": bob.id });
 
         assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn user_details_view_returns_user_details() {
+        let bob = create_fake_users();
+        let expected = json!({
+            "id": bob.id,
+            "username": bob.username,
+            "password": "*****",
+            "email": bob.email
+        });
+
+        let actual = user_details(&bob);
+        assert_eq!(expected, actual)
     }
 }

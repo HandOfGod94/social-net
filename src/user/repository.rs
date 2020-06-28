@@ -9,11 +9,13 @@ use crate::user::model::NewUser;
 use crate::ConnectionPool;
 
 use super::model::User;
+use uuid::Uuid;
 
 #[cfg_attr(test, automock)]
 pub trait Repository {
     fn read_all(&self) -> Vec<User>;
     fn create(&self, new_user: NewUser) -> QueryResult<User>;
+    fn find(&self, user_id: Uuid) -> QueryResult<User>;
 }
 
 #[derive(Clone)]
@@ -38,5 +40,10 @@ impl Repository for UserRepo {
         diesel::insert_into(users::table)
             .values(new_user)
             .get_result(&conn)
+    }
+
+    fn find(&self, user_id: Uuid) -> QueryResult<User> {
+        let conn = self.pool.get().unwrap();
+        users.find(user_id).first(&conn)
     }
 }
