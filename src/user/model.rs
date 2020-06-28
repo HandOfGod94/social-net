@@ -14,7 +14,7 @@ pub struct User {
     pub password: String,
 }
 
-#[derive(Insertable, Serialize, Deserialize, Debug)]
+#[derive(Insertable, Serialize, PartialEq, Deserialize, Debug)]
 #[table_name = "users"]
 pub struct NewUser {
     pub username: String,
@@ -29,5 +29,29 @@ impl From<RequestBody> for NewUser {
             password: req.password,
             email: req.email,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_creates_new_user_from_request_body() {
+        let req_body = RequestBody {
+            username: "Bob".to_string(),
+            password: "password".to_string(),
+            email: "bob@open.org".to_string(),
+        };
+
+        let expected = NewUser {
+            username: "Bob".to_string(),
+            password: "password".to_string(),
+            email: "bob@open.org".to_string(),
+        };
+
+        let actual: NewUser = req_body.into();
+
+        assert_eq!(expected, actual)
     }
 }

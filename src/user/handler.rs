@@ -46,7 +46,7 @@ async fn user_create(
     user_repo: impl Repository,
     req: RequestBody,
 ) -> Result<WithStatus<Json>, Infallible> {
-    let new_user = NewUser::from(req);
+    let new_user: NewUser = req.into();
     let result = user_repo.create(new_user);
 
     match result {
