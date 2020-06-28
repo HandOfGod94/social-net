@@ -6,7 +6,8 @@ use warp::reply::Json;
 use warp::{path, post};
 use warp::{Filter, Rejection, Reply};
 
-pub fn routes() -> impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone {
+pub fn routes(
+) -> impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone {
     path!("echo").and(post()).and(json_body()).and_then(handler)
 }
 
@@ -15,7 +16,8 @@ pub struct RequestBody {
     data: HashMap<String, String>,
 }
 
-pub fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clone {
+pub fn json_body(
+) -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clone {
     warp::body::json()
 }
 

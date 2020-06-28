@@ -12,7 +12,9 @@ use crate::ConnectionPool;
 use super::model::NewUser;
 use super::view;
 
-pub fn routes(pool: ConnectionPool) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub fn routes(
+    pool: ConnectionPool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let user_index_route = path!("users")
         .and(get())
         .and(with_repo(pool.clone()))
@@ -40,7 +42,10 @@ async fn user_index(user_repo: impl Repository) -> Result<Json, Infallible> {
     Ok(json(&resp))
 }
 
-async fn user_create(user_repo: impl Repository, req: RequestBody) -> Result<WithStatus<Json>, Infallible> {
+async fn user_create(
+    user_repo: impl Repository,
+    req: RequestBody,
+) -> Result<WithStatus<Json>, Infallible> {
     let new_user = NewUser::from(req);
     let result = user_repo.create(new_user);
 
@@ -49,16 +54,21 @@ async fn user_create(user_repo: impl Repository, req: RequestBody) -> Result<Wit
             let resp = view::user_create(&user);
             Ok(with_status(json(&resp), StatusCode::CREATED))
         }
-        Err(err) => Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST)),
+        Err(err) => {
+            Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST))
+        }
     }
 }
 
-fn with_repo(pool: ConnectionPool) -> impl Filter<Extract = (impl Repository,), Error = Infallible> + Clone {
+fn with_repo(
+    pool: ConnectionPool,
+) -> impl Filter<Extract = (impl Repository,), Error = Infallible> + Clone {
     let repo = UserRepo::new(pool);
     warp::any().map(move || repo.clone())
 }
 
-fn json_body() -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clone {
+fn json_body(
+) -> impl Filter<Extract = (RequestBody,), Error = Rejection> + Clone {
     warp::body::json()
 }
 
@@ -110,11 +120,17 @@ mod tests {
         };
 
         let filter = routes(db.clone());
-        let resp = request().method("POST").path("/users").json(&req).reply(&filter).await;
+        let resp = request()
+            .method("POST")
+            .path("/users")
+            .json(&req)
+            .reply(&filter)
+            .await;
 
-        let actual_resp_body: HashMap<String, String> = std::str::from_utf8(resp.body())
-            .map(|body| serde_json::from_str(body).unwrap())
-            .expect("Invalid response");
+        let actual_resp_body: HashMap<String, String> =
+            std::str::from_utf8(resp.body())
+                .map(|body| serde_json::from_str(body).unwrap())
+                .expect("Invalid response");
 
         assert_eq!(resp.status(), StatusCode::CREATED);
         assert!(actual_resp_body.contains_key("id"));

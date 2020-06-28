@@ -35,6 +35,8 @@ impl Repository for UserRepo {
 
     fn create(&self, new_user: NewUser) -> QueryResult<User> {
         let conn = self.pool.get().unwrap();
-        diesel::insert_into(users::table).values(new_user).get_result(&conn)
+        diesel::insert_into(users::table)
+            .values(new_user)
+            .get_result(&conn)
     }
 }
