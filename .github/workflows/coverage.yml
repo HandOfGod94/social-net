@@ -18,6 +18,10 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+    container:
+      volumes:
+        - /opt/reports/lcov.info:/opt/reports/lcov.info
+
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost/social_net_dev
 
@@ -42,7 +46,10 @@ jobs:
           RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
       - id: coverage
         uses: actions-rs/grcov@v0.1
+        with:
+          config: ./github/configs/grcov.yml
       - name: CodeCov upload
         uses: codecov/codecov-action@v1
         with:
+          file: /opt/reports/lcov.info
           fail_ci_if_error: true
