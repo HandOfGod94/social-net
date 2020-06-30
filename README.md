@@ -1,6 +1,9 @@
 # Social Net
 
-![ci](https://github.com/HandOfGod94/social-net/workflows/ci/badge.svg)
+[![test](https://github.com/HandOfGod94/social-net/workflows/test/badge.svg)](https://github.com/HandOfGod94/social-net/actions)
+[![grcov](https://github.com/HandOfGod94/social-net/workflows/grcov/badge.svg)](https://github.com/HandOfGod94/social-net/actions)
+[![codecov](https://codecov.io/gh/HandOfGod94/social-net/branch/master/graph/badge.svg)](https://codecov.io/gh/HandOfGod94/social-net)
+
 
 Personal Rust experimentation to create a social network app.
 
