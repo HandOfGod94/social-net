@@ -1,4 +1,4 @@
-name: Coverage
+name: grcov
 
 on: [push]
 
@@ -45,4 +45,5 @@ jobs:
       - name: Coveralls upload
         uses: coverallsapp/github-action@master
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ${{ steps.coverage.outputs.report }}
