@@ -1,5 +1,7 @@
 use std::convert::Infallible;
 
+use diesel::r2d2::{ConnectionManager, PooledConnection};
+use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::http::StatusCode;
@@ -7,7 +9,7 @@ use warp::reply::{json, with_status, Json, WithStatus};
 use warp::{get, path};
 use warp::{post, Filter, Rejection};
 
-use crate::user::repository::{Repository, UserRepo};
+use crate::user::repository::UserRepo;
 use crate::ConnectionPool;
 
 use super::model::NewUser;
@@ -18,17 +20,17 @@ pub fn routes(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let user_index_route = path!("users")
         .and(get())
-        .and(with_repo(pool.clone()))
+        .and(with_db_conn(pool.clone()))
         .and_then(user_index);
 
     let user_details_route = path!("users" / Uuid)
         .and(get())
-        .and(with_repo(pool.clone()))
+        .and(with_db_conn(pool.clone()))
         .and_then(user_details);
 
     let user_create_route = path!("users")
         .and(post())
-        .and(with_repo(pool))
+        .and(with_db_conn(pool.clone()))
         .and(json_body())
         .and_then(user_create);
 
@@ -44,18 +46,20 @@ pub struct RequestBody {
     pub email: String,
 }
 
-async fn user_index(user_repo: impl Repository) -> Result<Json, Infallible> {
-    let users = user_repo.read_all();
+async fn user_index(
+    conn: PooledConnection<ConnectionManager<PgConnection>>,
+) -> Result<Json, Infallible> {
+    let users = UserRepo::read_all(&conn);
     let resp = view::user_list(&users);
     Ok(json(&resp))
 }
 
 async fn user_create(
-    user_repo: impl Repository,
+    conn: PooledConnection<ConnectionManager<PgConnection>>,
     req: RequestBody,
 ) -> Result<WithStatus<Json>, Infallible> {
     let new_user: NewUser = req.into();
-    let result = user_repo.create(new_user);
+    let result = UserRepo::create(&conn, new_user);
 
     match result {
         Ok(user) => {
@@ -70,9 +74,9 @@ async fn user_create(
 
 async fn user_details(
     id: Uuid,
-    user_repo: impl Repository,
+    conn: PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<WithStatus<Json>, Infallible> {
-    let result = user_repo.find(id);
+    let result = UserRepo::find(&conn, id);
     match result {
         Ok(user) => {
             let resp = view::user_details(&user);
@@ -84,11 +88,13 @@ async fn user_details(
     }
 }
 
-fn with_repo(
+fn with_db_conn(
     pool: ConnectionPool,
-) -> impl Filter<Extract = (impl Repository,), Error = Infallible> + Clone {
-    let repo = UserRepo::new(pool);
-    warp::any().map(move || repo.clone())
+) -> impl Filter<
+    Extract = (PooledConnection<ConnectionManager<PgConnection>>,),
+    Error = Infallible,
+> + Clone {
+    warp::any().map(move || pool.get().unwrap())
 }
 
 fn json_body(
@@ -100,30 +106,33 @@ fn json_body(
 mod tests {
     use std::collections::HashMap;
 
+    use diesel::RunQueryDsl;
     use fake::faker::internet::en::FreeEmail;
     use fake::faker::internet::en::Password;
     use fake::faker::name::en::Name;
     use fake::Fake;
-    use mockall::*;
     use serde_json::json;
-    use uuid::Uuid;
     use warp::http::StatusCode;
     use warp::test::request;
     use warp::Reply;
 
+    use crate::schema::users;
     use crate::test_helpers::establish_connection;
     use crate::user::model::User;
-    use crate::user::repository::*;
 
     use super::*;
 
-    fn create_fake_users() -> User {
-        User {
-            id: Uuid::new_v4(),
+    fn create_fake_users(conn: &PgConnection) -> User {
+        let user = NewUser {
             username: Name().fake(),
             password: Password(5..10).fake(),
             email: FreeEmail().fake(),
-        }
+        };
+        let user = diesel::insert_into(users::table)
+            .values(&user)
+            .get_result(conn)
+            .expect("Failed to create fake user");
+        user
     }
 
     #[tokio::test]
@@ -164,9 +173,11 @@ mod tests {
 
     #[tokio::test]
     async fn user_index_returns_json_array() {
-        let mut mock_user_repo = MockRepository::new();
-        let bob = create_fake_users();
-        let alice = create_fake_users();
+        let pool = establish_connection();
+        let conn = pool.get().unwrap();
+
+        let bob = create_fake_users(&conn);
+        let alice = create_fake_users(&conn);
         let expected = json!([
             {
                 "email": bob.email,
@@ -180,12 +191,7 @@ mod tests {
         ])
         .to_string();
 
-        mock_user_repo
-            .expect_read_all()
-            .times(1)
-            .returning(move || vec![bob.clone(), alice.clone()]);
-
-        let result = user_index(mock_user_repo).await.unwrap().into_response();
+        let result = user_index(conn).await.unwrap().into_response();
         let actual = hyper::body::to_bytes(result.into_body()).await.unwrap();
 
         assert_eq!(actual, expected)
@@ -193,8 +199,9 @@ mod tests {
 
     #[tokio::test]
     async fn user_details_returns_user_json_value() {
-        let mut mock_user_repo = MockRepository::new();
-        let bob = create_fake_users();
+        let pool = establish_connection();
+        let conn = pool.get().unwrap();
+        let bob = create_fake_users(&conn);
         let bob_id = bob.clone().id;
         let expected = json!({
             "id": bob_id,
@@ -204,16 +211,8 @@ mod tests {
         })
         .to_string();
 
-        mock_user_repo
-            .expect_find()
-            .with(predicate::eq(bob_id))
-            .times(1)
-            .returning(move |_id| Ok(bob.clone()));
-
-        let user_details = user_details(bob_id, mock_user_repo)
-            .await
-            .unwrap()
-            .into_response();
+        let user_details =
+            user_details(bob_id, conn).await.unwrap().into_response();
         let actual = hyper::body::to_bytes(user_details.into_body())
             .await
             .unwrap();

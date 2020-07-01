@@ -22,5 +22,4 @@ uuid = { version = "0.8.1", features = ["serde", "v4"] }
 
 [dev-dependencies]
 fake = { version = "2.2", features = ["chrono"]}
-mockall = "0.7.1"
 hyper = "0.13"
