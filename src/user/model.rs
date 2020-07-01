@@ -6,7 +6,7 @@ use crate::schema::users;
 
 use super::handler::RequestBody;
 
-#[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
+#[derive(Queryable, Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct User {
     pub id: Uuid,
     pub username: String,
