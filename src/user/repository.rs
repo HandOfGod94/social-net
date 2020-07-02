@@ -116,7 +116,7 @@ mod tests {
 
     #[test]
     fn deletes_user_for_valid_id() {
-       let conn = establish_connection().get().unwrap();
+        let conn = establish_connection().get().unwrap();
         let bob = create_fake_users(&conn);
 
         let result = UserRepo::delete(&conn, bob.id);
@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn delete_returns_error_for_non_existent_user() {
-       let conn = establish_connection().get().unwrap();
+        let conn = establish_connection().get().unwrap();
         let id = Uuid::new_v4();
 
         let result = UserRepo::delete(&conn, id);

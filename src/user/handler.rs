@@ -6,8 +6,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::http::StatusCode;
 use warp::reply::{json, with_status, Json, WithStatus};
-use warp::{get, path};
-use warp::{post, Filter, Rejection};
+use warp::{delete, get, path, post, Filter, Rejection};
 
 use crate::user::repository::UserRepo;
 use crate::ConnectionPool;
@@ -30,13 +29,19 @@ pub fn routes(
 
     let user_create_route = path!("users")
         .and(post())
-        .and(with_db_conn(pool))
+        .and(with_db_conn(pool.clone()))
         .and(json_body())
         .and_then(user_create);
+
+    let user_delete_route = path!("users" / Uuid)
+        .and(delete())
+        .and(with_db_conn(pool))
+        .and_then(user_delete);
 
     user_index_route
         .or(user_details_route)
         .or(user_create_route)
+        .or(user_delete_route)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -77,14 +82,32 @@ async fn user_details(
     id: Uuid,
     conn: PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Result<WithStatus<Json>, Infallible> {
-    let result = UserRepo::find(&conn, id);
-    match result {
+    match UserRepo::find(&conn, id) {
         Ok(user) => {
             let resp = view::user_details(&user);
             Ok(with_status(json(&resp), StatusCode::OK))
         }
         Err(err) => {
             Ok(with_status(json(&err.to_string()), StatusCode::NOT_FOUND))
+        }
+    }
+}
+
+async fn user_delete(
+    id: Uuid,
+    conn: PooledConnection<ConnectionManager<PgConnection>>,
+) -> Result<WithStatus<Json>, Infallible> {
+    match UserRepo::delete(&conn, id) {
+        Ok(val) if val > 0 => Ok(with_status(
+            json(&"{\"success\": true}".to_string()),
+            StatusCode::OK,
+        )),
+        Ok(_) => Ok(with_status(
+            json(&"{\"success\": false}".to_string()),
+            StatusCode::NOT_FOUND,
+        )),
+        Err(err) => {
+            Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST))
         }
     }
 }
@@ -108,8 +131,7 @@ mod tests {
     use std::collections::HashMap;
 
     use diesel::RunQueryDsl;
-    use fake::faker::internet::en::FreeEmail;
-    use fake::faker::internet::en::Password;
+    use fake::faker::internet::en::{FreeEmail, Password};
     use fake::faker::name::en::Name;
     use fake::Fake;
     use serde_json::json;
@@ -254,5 +276,35 @@ mod tests {
 
         assert_eq!(parts.status, StatusCode::NOT_FOUND);
         assert_eq!(body, "\"NotFound\"");
+    }
+
+    #[tokio::test]
+    async fn delete_returns_success_message_if_user_exist() {
+        let conn = establish_connection().get().unwrap();
+        let bob = create_fake_users(&conn);
+        let (parts, body) = user_delete(bob.id, conn)
+            .await
+            .unwrap()
+            .into_response()
+            .into_parts();
+        let body = hyper::body::to_bytes(body).await.unwrap();
+
+        assert_eq!(parts.status, StatusCode::OK);
+        assert_eq!(body, "\"{\\\"success\\\": true}\"");
+    }
+
+    #[tokio::test]
+    async fn delete_returns_failure_if_user_does_not_exist() {
+        let conn = establish_connection().get().unwrap();
+        let id = Uuid::new_v4();
+        let (parts, body) = user_delete(id, conn)
+            .await
+            .unwrap()
+            .into_response()
+            .into_parts();
+        let body = hyper::body::to_bytes(body).await.unwrap();
+
+        assert_eq!(parts.status, StatusCode::NOT_FOUND);
+        assert_eq!(body, "\"{\\\"success\\\": false}\"");
     }
 }
