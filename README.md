@@ -2,8 +2,7 @@
 
 [![test](https://github.com/HandOfGod94/social-net/workflows/test/badge.svg)](https://github.com/HandOfGod94/social-net/actions)
 [![grcov](https://github.com/HandOfGod94/social-net/workflows/grcov/badge.svg)](https://github.com/HandOfGod94/social-net/actions)
-[![codecov](https://codecov.io/gh/HandOfGod94/social-net/branch/master/graph/badge.svg)](https://codecov.io/gh/HandOfGod94/social-net)
-
+[![Coverage Status](https://coveralls.io/repos/github/HandOfGod94/social-net/badge.svg?branch=master)](https://coveralls.io/github/HandOfGod94/social-net?branch=master)
 
 Personal Rust experimentation to create a social network app.
 
