@@ -1,1 +1,10 @@
 source-dir: "./"
+ignore-not-existing: true
+llvm: true
+filter: covered
+ignore:
+  - "/*"
+  - "C:/*"
+  - "../*"
+
+#grcov ./target/debug/ -s . --llvm --ignore-not-existing
