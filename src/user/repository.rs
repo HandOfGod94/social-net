@@ -24,6 +24,10 @@ impl UserRepo {
     pub fn find(conn: &PgConnection, user_id: Uuid) -> QueryResult<User> {
         users.find(user_id).first(conn)
     }
+
+    pub fn delete(conn: &PgConnection, user_id: Uuid) -> QueryResult<usize> {
+        diesel::delete(users.filter(id.eq(user_id))).execute(conn)
+    }
 }
 
 #[cfg(test)]
@@ -108,5 +112,23 @@ mod tests {
 
         let result = UserRepo::find(&conn, id);
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn deletes_user_for_valid_id() {
+       let conn = establish_connection().get().unwrap();
+        let bob = create_fake_users(&conn);
+
+        let result = UserRepo::delete(&conn, bob.id);
+        assert_eq!(result, Ok(1));
+    }
+
+    #[test]
+    fn delete_returns_error_for_non_existent_user() {
+       let conn = establish_connection().get().unwrap();
+        let id = Uuid::new_v4();
+
+        let result = UserRepo::delete(&conn, id);
+        assert_eq!(result, Ok(0));
     }
 }
