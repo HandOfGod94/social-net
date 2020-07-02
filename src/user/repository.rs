@@ -8,7 +8,6 @@ use crate::user::model::NewUser;
 
 use super::model::User;
 
-#[derive(Clone)]
 pub struct UserRepo;
 
 impl UserRepo {

@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["gahan.rakholia <gahan.rakholia@go-jek.com>"]
 edition = "2018"
 
+[profile.dev]
+opt-level = 0
+
 [profile.release]
 opt-level = "z"
 

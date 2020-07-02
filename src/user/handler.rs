@@ -30,7 +30,7 @@ pub fn routes(
 
     let user_create_route = path!("users")
         .and(post())
-        .and(with_db_conn(pool.clone()))
+        .and(with_db_conn(pool))
         .and(json_body())
         .and_then(user_create);
 
@@ -66,9 +66,10 @@ async fn user_create(
             let resp = view::user_create(&user);
             Ok(with_status(json(&resp), StatusCode::CREATED))
         }
-        Err(err) => {
-            Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST))
-        }
+        Err(err) => Ok(with_status(
+            json(&err.to_string()),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        )),
     }
 }
 
@@ -172,6 +173,26 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn user_create_fails_for_duplicate_username() {
+        let conn = establish_connection().get().unwrap();
+        let user = create_fake_users(&conn);
+        let new_user_request = RequestBody {
+            username: user.username,
+            password: user.password,
+            email: user.email,
+        };
+
+        let (parts, body) = user_create(conn, new_user_request)
+            .await
+            .unwrap()
+            .into_response()
+            .into_parts();
+        let body = hyper::body::to_bytes(body).await.unwrap();
+        assert_eq!(parts.status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body, "\"duplicate key value violates unique constraint \\\"users_username_key\\\"\"")
+    }
+
+    #[tokio::test]
     async fn user_index_returns_json_array() {
         let pool = establish_connection();
         let conn = pool.get().unwrap();
@@ -218,5 +239,20 @@ mod tests {
             .unwrap();
 
         assert_eq!(actual, expected);
+    }
+
+    #[tokio::test]
+    async fn user_details_returns_error_for_non_existent_user() {
+        let conn = establish_connection().get().unwrap();
+        let uuid = Uuid::new_v4();
+        let (parts, body) = user_details(uuid, conn)
+            .await
+            .unwrap()
+            .into_response()
+            .into_parts();
+        let body = hyper::body::to_bytes(body).await.unwrap();
+
+        assert_eq!(parts.status, StatusCode::NOT_FOUND);
+        assert_eq!(body, "\"NotFound\"");
     }
 }
