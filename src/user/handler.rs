@@ -107,7 +107,11 @@ async fn user_delete(
             StatusCode::NOT_FOUND,
         )),
         Err(err) => {
-            Ok(with_status(json(&err.to_string()), StatusCode::BAD_REQUEST))
+            error!("Something went really wrong while deleting user");
+            Ok(with_status(
+                json(&err.to_string()),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ))
         }
     }
 }
