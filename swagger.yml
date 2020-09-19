@@ -1,0 +1,41 @@
+openapi: 3.0.0
+
+info:
+  title: Social Net API
+  description: Rust Experimental Social Net.
+  version: 0.1.9
+
+paths:
+  /ping:
+    get:
+      summary: ping endpoint
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  succeess:
+                    type: boolean
+                    example: true
+
+  /echo:
+    post:
+      summary: Dummy endpoint to verify post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example: { "foo": "bar" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                example: { "foo": "bar" }

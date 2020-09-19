@@ -10,8 +10,16 @@ Personal Rust experimentation to create a social network app.
 - warp
 - diesel with postgres
 
-## Build
+## Commands
 ```sh
+# Database setup
+# install deisel cli (if not present already)
+cargo install diesel_cli --no-default-features --features postgres
+
+# Create DB
+diesel setup
+
+
 # To run tests
 cargo test
 
