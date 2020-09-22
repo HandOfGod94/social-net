@@ -15,15 +15,14 @@ use diesel::PgConnection;
 // mod schema;
 // mod user;
 mod handlers;
+mod router;
 
 type ConnectionPool = Pool<ConnectionManager<PgConnection>>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
-        App::new()
-            .service(handlers::ping::index)
-            .service(handlers::echo::index)
+        App::new().configure(router::route_config)
     })
     .bind("127.0.0.1:8080")?
     .run()

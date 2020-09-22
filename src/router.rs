@@ -1,12 +1,12 @@
 use std::env;
 
+use actix_web::web::ServiceConfig;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
-use warp::{Filter, Reply};
 
-use crate::echo;
-use crate::ping;
-use crate::user;
+use crate::handlers::echo;
+use crate::handlers::ping;
+// use crate::user;
 use crate::ConnectionPool;
 
 fn establish_connection() -> ConnectionPool {
@@ -17,10 +17,6 @@ fn establish_connection() -> ConnectionPool {
     Pool::new(manager).expect("Postgres connection pool couldn't be created")
 }
 
-pub fn routes(
-) -> impl Filter<Extract = impl Reply, Error = warp::Rejection> + Clone {
-    let db_pool = establish_connection();
-    ping::routes()
-        .or(echo::routes())
-        .or(user::handler::routes(db_pool))
+pub fn route_config(cfg: &mut ServiceConfig) {
+    cfg.service(ping::index).service(echo::index);
 }
