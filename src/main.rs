@@ -20,10 +20,14 @@ type ConnectionPool = Pool<ConnectionManager<PgConnection>>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(handlers::ping::index))
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
+    HttpServer::new(|| {
+        App::new()
+            .service(handlers::ping::index)
+            .service(handlers::echo::index)
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }
 
 #[cfg(test)]
