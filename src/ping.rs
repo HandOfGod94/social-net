@@ -3,12 +3,10 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 struct Response {
-    success: bool
+  success: bool,
 }
 
 #[get("/ping")]
 pub async fn index() -> HttpResponse {
-    HttpResponse::Ok().json(Response{
-        success: true
-    })
+  HttpResponse::Ok().json(Response { success: true })
 }
