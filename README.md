@@ -30,8 +30,8 @@ cargo clippy
 cargo build --release
 
 # To start dev server
-RUST_LOG=social_net,warp=info cargo run
+RUST_LOG=info cargo run
 
 # To start prod server
-RUST_LOG=social_net,warp=info ./target/release/social-net
+RUST_LOG=info ./target/release/social-net
 ```
