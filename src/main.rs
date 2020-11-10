@@ -5,27 +5,27 @@ extern crate dotenv;
 extern crate log;
 extern crate pretty_env_logger;
 
-use actix_web::{App, HttpServer};
-use actix_web::middleware::Logger;
-use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
+use diesel::PgConnection;
+use warp::Filter;
 
-mod auth;
 mod echo;
 mod ping;
-mod schema;
 mod router;
+mod schema;
+mod user;
 
 type ConnectionPool = Pool<ConnectionManager<PgConnection>>;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-  pretty_env_logger::init();
-  info!("Starting Server!!");
-  HttpServer::new(|| App::new().wrap(Logger::default()).configure(router::route_config))
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
+#[tokio::main]
+async fn main() {
+    pretty_env_logger::init();
+    let log = warp::log("social_net");
+    let router = router::routes().with(log);
+
+    info!("Starting Server");
+
+    warp::serve(router).run(([127, 0, 0, 1], 8080)).await;
 }
 
 #[cfg(test)]
